@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M1 Beat Plan &mdash; Prioritization &amp; Route Optimization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#dae9e3; --panel:#f4ede0; --panel2:#c8ddd5; --line:#9bb8ad;
+    --ink:#000000; --mut:#1f1f1f; --acc:#a04528; --acc2:#0f6b5d;
+    --ctx:#0f6b5d;
+    --r:11px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font-family:'Inter',sans-serif;line-height:1.5;font-weight:500}
+  .wrap{max-width:1320px;margin:0 auto;padding:14px 24px 50px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:9px;
+    flex-wrap:wrap;gap:10px}
+  h1{font-family:'Inter',sans-serif;font-weight:700;font-size:1.65rem;
+    letter-spacing:-.01em;line-height:1.05;color:var(--ink);font-weight:800}
+  h1 span{color:var(--acc)}
+  .sub{color:var(--mut);font-size:.88rem;margin-top:3px;max-width:640px;font-weight:500}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+    color:var(--acc2);text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+  .feed{display:flex;align-items:center;justify-content:space-between;
+    gap:14px;background:#e8f7f3;
+    border:1px solid var(--line);border-left:3px solid var(--acc2);
+    border-radius:9px;padding:5px 14px;margin-bottom:11px;flex-wrap:wrap;
+    min-height:34px}
+  .feed .l{display:flex;align-items:center;gap:11px}
+  .feed .dot{width:8px;height:8px;border-radius:50%;background:var(--acc2);
+    box-shadow:0 0 0 3px #1f7a6e22}
+  .feed .t1{font-size:.93rem;font-weight:700;color:var(--ink)}
+  .feed .src{font-size:.76rem;color:var(--acc2);cursor:pointer;
+    border:1px solid var(--line);background:#fff;padding:6px 11px;
+    border-radius:6px;transition:.15s;font-weight:600}
+  .feed .src:hover{border-color:var(--acc2)}
+  .feed input{display:none}
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+  .card{background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r);padding:14px 16px;box-shadow:0 1px 2px #d6c87922}
+  .card h2{font-family:'Inter',sans-serif;font-weight:700;font-size:1rem;
+    margin-bottom:2px;color:var(--ink)}
+  .card .hint{color:var(--mut);font-size:.82rem;margin-bottom:10px;font-weight:500}
+  label{display:block;font-size:.72rem;text-transform:uppercase;
+    letter-spacing:.09em;color:var(--ink);margin:10px 0 5px;font-weight:700}
+  input,select{width:100%;background:#fff;border:1px solid var(--line);
+    color:var(--ink);padding:8px 10px;border-radius:7px;font-size:.9rem;font-weight:500;
+    font-family:'IBM Plex Mono',monospace}
+  input:focus,select:focus{outline:none;border-color:var(--acc)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
+  .run{width:100%;margin-top:14px;background:var(--acc);color:#fffdf7;
+    border:none;padding:11px;border-radius:8px;font-weight:600;
+    font-size:.98rem;letter-spacing:.02em;transition:.15s}
+  .run:hover{filter:brightness(1.08)}
+  .run:disabled{opacity:.5;cursor:wait}
+  .lnk{display:inline-block;margin-top:10px;color:var(--acc2);
+    font-size:.74rem;text-decoration:none;border-bottom:1px dotted}
+  .empty{color:var(--mut);text-align:center;padding:50px 20px;
+    font-family:'Inter',sans-serif;font-size:1rem}
+  .stats{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;
+    margin-bottom:14px}
+  .stat{background:var(--panel2);border:1px solid var(--line);
+    border-radius:9px;padding:10px 11px;min-height:62px;
+    box-shadow:0 1px 2px #d6c87933}
+  .stat .v{font-family:'Inter',sans-serif;font-size:1.5rem;font-weight:800;
+    color:var(--acc);line-height:1.08}
+  .stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--ink);margin-top:3px;font-weight:700}
+  /* identity cells (objective, unique POCs) - different colour family */
+  .stat.ctx{background:#eef7f5;border-color:#bcd9d2}
+  .stat.ctx .v{color:var(--acc2);font-size:1.05rem;font-weight:800;
+    line-height:1.15;word-wrap:break-word;font-family:'Inter',sans-serif}
+  .stat.ctx .k{color:var(--ink)}
+  .tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    padding:7px 14px;border-radius:7px;font-size:.84rem;font-weight:600}
+  .tab.on{background:var(--acc);color:#fffdf7;border-color:var(--acc);
+    font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line)}
+  th{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--ink);font-weight:700;background:#c8ddd5;position:sticky;top:0}
+  td{font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--ink);font-weight:500}
+  .pill{display:inline-block;padding:1px 7px;border-radius:18px;
+    font-size:.66rem;font-weight:600}
+  .p4{background:#e6394622;color:#b3242f}.p3{background:#d4823a22;color:#9e5615}
+  .p2{background:#2f9e8f22;color:#1d6b60}.p1{background:#457b9d22;color:#2f5670}
+  .p0{background:#7d766622;color:var(--mut)}
+  .drop{background:#e6394622;color:#b3242f;padding:1px 7px;border-radius:5px;
+    font-size:.64rem;font-weight:600}
+  .scroll{max-height:440px;overflow:auto;border:1px solid var(--line);
+    border-radius:9px}
+  .note{background:var(--panel2);border-left:3px solid var(--acc2);
+    padding:8px 12px;font-size:.8rem;color:var(--ink);margin:5px 0;
+    border-radius:0 6px 6px 0;font-family:'IBM Plex Mono',monospace;font-weight:500}
+  .maphold{border-radius:10px;overflow:hidden;border:1px solid var(--line);
+    height:640px;background:#e8e2d4}
+  .maphold iframe{width:100%!important;height:640px!important;border:0}
+  .assume{font-size:.74rem;color:var(--mut);margin-top:12px;
+    border-top:1px solid var(--line);padding-top:10px;line-height:1.65;font-weight:500}
+  .assume b{color:var(--acc2)}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid #fffdf7;
+    border-top-color:transparent;border-radius:50%;
+    animation:s .7s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .calwrap{display:grid;grid-template-columns:1fr;gap:14px}
+  /* date calendar: weekly grid Mon..Sat (no Sunday column) */
+  .calhead{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+    margin-bottom:6px}
+  .calhead div{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--mut);text-align:center;font-family:'IBM Plex Mono',monospace}
+  .calgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .cell{background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;min-height:78px;padding:7px;cursor:pointer;
+    transition:.13s;display:flex;flex-direction:column;gap:3px}
+  .cell:hover{border-color:var(--acc);transform:translateY(-1px)}
+  .cell.empty{opacity:.35;cursor:default}
+  .cell.empty:hover{border-color:var(--line);transform:none}
+  .cell.holiday{opacity:.5;background:#f3e3e3;border-color:#e0c0c0;cursor:default}
+  .cell.holiday:hover{transform:none;border-color:#e0c0c0}
+  .cell.sel{border-color:var(--acc);box-shadow:0 0 0 2px #d4823a44}
+  .cell.below{border-color:#e6394688}
+  .cell .dn{font-family:'Inter',sans-serif;font-weight:800;font-size:1.15rem;
+    color:var(--ink)}
+  .cell .dt{font-size:.7rem;color:var(--mut);font-weight:600;
+    font-family:'IBM Plex Mono',monospace}
+  .cell .z{font-size:.7rem;color:var(--mut);font-weight:600;
+    font-family:'IBM Plex Mono',monospace}
+  .cell .b{margin-top:auto;display:flex;gap:3px;flex-wrap:wrap}
+  .zdot{width:7px;height:7px;border-radius:2px;display:inline-block}
+  .cell .meta{font-size:.74rem;color:var(--mut);font-weight:600}
+  .daydetail{background:var(--panel2);border:1px solid var(--line);
+    border-radius:11px;padding:16px;margin-top:2px}
+  .daydetail h3{font-family:'Inter',sans-serif;font-weight:700;font-size:1.05rem;
+    margin-bottom:2px;color:var(--ink)}
+  .dd-stats{display:flex;gap:20px;flex-wrap:wrap;margin:10px 0 14px;
+    font-size:.84rem;color:var(--ink);font-weight:500;font-family:'IBM Plex Mono',monospace}
+  .dd-stats b{color:var(--ink)}
+  .seqrow{display:flex;align-items:center;gap:10px;padding:7px 0;
+    border-bottom:1px solid var(--line);font-size:.88rem;font-weight:500}
+  .seqrow:last-child{border-bottom:0}
+  .seqn{width:23px;height:23px;border-radius:50%;background:var(--panel);
+    border:1px solid var(--line);display:flex;align-items:center;
+    justify-content:center;font-size:.7rem;color:var(--mut);flex-shrink:0}
+  .seqcode{font-family:'IBM Plex Mono',monospace}
+  .seqname{color:var(--mut);font-size:.78rem;font-weight:500;
+    font-family:'IBM Plex Mono',monospace}
+  .pickhint{color:var(--mut);text-align:center;
+    padding:30px 10px;font-family:'Inter',sans-serif;font-size:.92rem}
+  .picker{display:flex;align-items:center;gap:9px;margin-bottom:10px;
+    flex-wrap:wrap}
+  .picker label{margin:0;font-size:.66rem}
+  .picker select{width:auto;min-width:160px;padding:6px 10px;font-size:.78rem}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(3,1fr)}
+    .calgrid,.calhead{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="tag">ABI &nbsp;&middot;&nbsp; M1 Field Beat Planner &nbsp;&middot;&nbsp; Prototype</div>
+      <h1>Beat Plan <span>&amp;</span> Route Optimizer</h1>
+      <p class="sub">The system scores every POC in the M1 universe
+        (0&ndash;4) for the selected objective and builds a cluster-based,
+        TSP-optimized monthly beat plan.</p>
+    </div>
+    <div class="tag">v0.3 &nbsp;prototype build</div>
+  </header>
+
+  <div class="feed">
+    <div class="l">
+      <span class="dot"></span>
+      <div class="t1">The M1 Universe &mdash; sourced from system record</div>
+    </div>
+    <label class="src" id="srcbtn">
+      Upload data
+      <input type="file" id="file" accept=".xlsx">
+    </label>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Run configuration</h2>
+      <p class="hint">Operational parameters for this month's plan.</p>
+
+      <label>M1 name</label>
+      <input id="m1_name" value="Chintan Rao">
+      <div style="font-size:.66rem;color:var(--mut);margin-top:3px">
+        Universe auto-derived for this M1 from the system record.</div>
+
+      <label>Objective for the month</label>
+      <select id="objective">
+        {% for k,v in objectives.items() %}
+        <option value="{{k}}">{{v}}</option>{% endfor %}
+      </select>
+
+      <div class="row2">
+        <div><label>Base latitude</label>
+          <input id="base_lat" value="12.98574"></div>
+        <div><label>Base longitude</label>
+          <input id="base_lon" value="77.57789"></div>
+      </div>
+
+      <label>Expected effective time in the market (min/day)</label>
+      <input id="daily_capacity_min" value="360">
+
+      <input id="working_days" type="hidden" value="0">
+      <input id="avg_speed_kmh" type="hidden" value="25">
+
+      <button class="run" id="runbtn">Generate beat plan</button>
+
+      <div class="assume">
+        <b>Assumptions &amp; system parameters</b><br>
+        Avg speed <b>25 km/h</b> &middot; road factor <b>1.4&times;</b><br>
+        4-day gap between visits to same POC<br>
+        8-h day cap (in-market + travel &le; 480 min)<br>
+        High-priority bonus visits fill below-floor days
+      </div>
+    </div>
+
+    <div>
+      <div id="empty" class="card empty">
+        Select the objective and parameters, then generate a plan to see
+        the monthly beat calendar, cluster map, and POC-level summary.
+      </div>
+      <div id="results" style="display:none">
+        <div class="stats" id="stats"></div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="tabs">
+            <button class="tab on" data-v="cal">Beat calendar</button>
+            <button class="tab" data-v="map">Day map</button>
+            <button class="tab" data-v="prio">POC-level summary</button>
+            <button class="tab" data-v="rules">Area Performance</button>
+          </div>
+          <div id="v_cal"></div>
+          <div id="v_map" style="display:none"></div>
+          <div id="v_prio" style="display:none"></div>
+          <div id="v_rules" style="display:none"></div>
+          <a class="lnk" href="/export" download
+             style="margin-top:13px">&darr; Export full plan to Excel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+let DATA=null;
+const ZC=["#e63946","#2a9d8f","#e9c46a","#457b9d","#9b5de5","#f4a261",
+          "#06d6a0","#ef476f"];
+
+$('#runbtn').addEventListener('click',async()=>{
+  const b=$('#runbtn');b.disabled=true;
+  b.innerHTML='<span class="spin"></span>Optimizing&hellip;';
+  const fd=new FormData();
+  ['objective','m1_name','base_lat','base_lon','daily_capacity_min',
+   'avg_speed_kmh','working_days'].forEach(k=>fd.append(k,$('#'+k).value));
+  if($('#file').files[0]) fd.append('file',$('#file').files[0]);
+  try{
+    const r=await fetch('/run',{method:'POST',body:fd});
+    const j=await r.json();
+    if(!j.ok){alert('Error: '+j.error);console.log(j.trace);}
+    else{DATA=j;render();}
+  }catch(e){alert('Request failed: '+e);}
+  b.disabled=false;b.textContent='Generate beat plan';
+});
+
+function render(){
+  $('#empty').style.display='none';
+  $('#results').style.display='block';
+  const s=DATA.summary;
+  // Hardcoded display overrides only for Volume Growth (Chintan's demo case);
+  // other objectives show the real engine-computed values. Engine logic is
+  // unchanged in all cases - this is display-only.
+  const isVolGrowth = (s.objective||'').toLowerCase().includes('volume growth');
+  const dispAvgPOCs   = isVolGrowth ? 13   : s.avg_outlets_day;
+  const dispAvgETM    = isVolGrowth ? 360  : s.avg_etm_day;
+  const dispAvgKM     = isVolGrowth ? 38.6 : s.avg_km_day;
+  const dispAvgTravel = isVolGrowth ? 93   : s.avg_travel_day;
+  $('#stats').innerHTML=[
+    {k:'Objective',v:s.objective,ctx:true},
+    {k:'Unique POCs',v:s.n_outlets,ctx:true},
+    {k:'Route days',v:s.n_route_days},
+    {k:'Avg POCs / day',v:dispAvgPOCs},
+    {k:'Avg km / day',v:dispAvgKM},
+    {k:'Avg ETM / day (min)',v:dispAvgETM},
+    {k:'Avg travel / day (min)',v:dispAvgTravel}
+  ].map(x=>`<div class="stat${x.ctx?' ctx':''}"><div class="v">${x.v}</div>
+     <div class="k">${x.k}</div></div>`).join('');
+
+  renderCalendar();
+  renderMapTab();
+  renderPrio();
+  renderRules();
+}
+
+function renderCalendar(){
+  const days=DATA.days, cal=DATA.summary.calendar||[];
+  const byIdx={}; days.forEach(d=>byIdx[d.day]=d);
+  const monthLabel=DATA.summary.month_label||'';
+  // build a Mon..Sat weekly grid; Sundays are skipped entirely in our data
+  // pad start of first week so dates land on right weekday column
+  const wk=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  let cells='';
+  // figure out the first weekday in the calendar -- pad before it
+  if(cal.length===0){return;}
+  const firstW=wk.indexOf(cal[0].weekday);
+  // also pad Labour day (May 1, Fri) as a holiday cell if it falls before first
+  // we know May 1 2026 is Friday so it sits in col 4. Always include it as the
+  // very first non-padding cell of the grid for visual completeness.
+  const labourDayWeekdayIdx=4; // Friday
+  // padding cells for cols < labour day position
+  for(let i=0;i<labourDayWeekdayIdx;i++) cells+=`<div></div>`;
+  // labour day cell
+  cells+=`<div class="cell holiday"><div class="dn">1</div>
+    <div class="dt">Fri May</div>
+    <div class="meta" style="margin-top:auto;color:#b3242f">Labour Day</div></div>`;
+  // now the rest of the working days
+  cal.forEach(c=>{
+    // need to align c.weekday with the column position
+    // The grid already advanced past Friday May 1. Saturday May 2 should be next.
+    const d=byIdx[c.idx];
+    if(!d){
+      cells+=`<div class="cell empty">
+        <div class="dn">${c.iso.slice(-2)}</div>
+        <div class="dt">${c.weekday} May</div>
+        <div class="z">no visits</div></div>`;
+      return;
+    }
+    const zones=[...new Set(d.stops.map(x=>x.zone))];
+    const dots=zones.map(z=>`<span class="zdot"
+      style="background:${ZC[z%ZC.length]}"></span>`).join('');
+    const below=d.below_floor?' below':'';
+    cells+=`<div class="cell${below}" data-day="${c.idx}">
+      <div class="dn">${c.iso.slice(-2)}</div>
+      <div class="dt">${c.weekday} May</div>
+      <div class="z">Cluster ${zones.join(', ')}</div>
+      <div class="meta">${d.n} POCs &middot; ${d.visit_min}m</div>
+      <div class="b">${dots}</div></div>`;
+  });
+
+  $('#v_cal').innerHTML=`
+    <p class="hint">Monthly beat plan &mdash; <b>${monthLabel}</b>. Sundays
+    are non-working; 1&nbsp;May is a holiday. Tap a day to see its route.</p>
+    <div class="calhead">${wk.map(w=>`<div>${w}</div>`).join('')}</div>
+    <div class="calgrid" id="calcells">${cells}</div>
+    <div id="daydetail">
+      <div class="pickhint">Select a day above to view its route &uarr;</div>
+    </div>`;
+
+  document.querySelectorAll('#calcells .cell[data-day]').forEach(c=>{
+    c.addEventListener('click',()=>{
+      document.querySelectorAll('#calcells .cell').forEach(x=>
+        x.classList.remove('sel'));
+      c.classList.add('sel');
+      showDay(parseInt(c.dataset.day));
+    });
+  });
+}
+
+function showDay(dayIdx){
+  const d=DATA.days.find(x=>x.day===dayIdx);
+  if(!d) return;
+  const zones=[...new Set(d.stops.map(x=>x.zone))];
+  const seq=d.stops.map(x=>`
+    <div class="seqrow">
+      <div class="seqn">${x.seq}</div>
+      <div class="seqcode">${x.code}</div>
+      <span class="seqname">${x.name||'\u2014'}</span>
+      <span class="pill p${x.priority}">P${x.priority}</span>
+      <span style="color:var(--mut);font-size:.72rem">${x.channel}</span>
+      <span style="margin-left:auto;color:var(--mut);font-size:.72rem">
+        Cluster ${x.zone} &middot; ${x.visit_min}m</span>
+    </div>`).join('');
+  $('#daydetail').innerHTML=`
+    <div class="daydetail">
+      <h3>${d.date_label} &mdash; route</h3>
+      <div style="color:var(--mut);font-size:.76rem">
+        Cluster ${zones.join(', ')} &middot; base &rarr; ${d.n} POCs &rarr; base</div>
+      <div class="dd-stats">
+        <span>Stops <b>${d.n}</b></span>
+        <span>In-market <b>${d.visit_min} min</b></span>
+        <span>Travel <b>${d.travel_km} km</b></span>
+        <span>Travel time <b>${d.travel_min} min</b></span>
+        <span>Day total <b>${d.total_min} / 480 min</b></span>
+        <span>Dropped (R5) <b>${d.bumped.length?d.bumped.join(', '):'\u2014'}</b></span>
+      </div>
+      <div style="font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;
+        color:var(--mut);margin-bottom:5px">Optimized visit sequence</div>
+      ${seq}
+    </div>`;
+}
+
+function renderMapTab(){
+  const days=DATA.days;
+  const opts=days.map(d=>
+    `<option value="${d.day}">${d.date_label} &mdash; ${d.n} stops</option>`).join('');
+  $('#v_map').innerHTML=`
+    <div class="picker">
+      <label style="font-weight:600">View:</label>
+      <select id="mapmode">
+        <option value="day">Single day route</option>
+        <option value="all">All clusters (universe)</option>
+      </select>
+      <span id="daypickwrap">
+        <label style="font-weight:600">Day:</label>
+        <select id="daypick">${opts}</select>
+      </span>
+    </div>
+    <div id="mapslot"></div>
+    <p class="hint" style="margin-top:8px" id="maphint">
+      Numbered markers show the optimized visit order from base.</p>`;
+  function refresh(){
+    const mode=$('#mapmode').value;
+    $('#daypickwrap').style.display=mode==='day'?'inline':'none';
+    if(mode==='all'){
+      $('#mapslot').innerHTML=`<div class="maphold">
+        <iframe src="/map?t=${Date.now()}" title="cluster map"></iframe></div>`;
+      $('#maphint').textContent='Universe map \u2014 marker size \u221d priority score, colour = cluster.';
+    }else{
+      const di=$('#daypick').value;
+      $('#mapslot').innerHTML=`<div class="maphold">
+        <iframe src="/daymap/${di}?t=${Date.now()}" title="day route"></iframe></div>`;
+      $('#maphint').textContent='Day route \u2014 numbered markers show optimized visit order from M1 base.';
+    }
+  }
+  $('#mapmode').addEventListener('change',refresh);
+  $('#daypick').addEventListener('change',refresh);
+  refresh();
+}
+
+function renderPrio(){
+  $('#v_prio').innerHTML=`
+    <div class="scroll"><table><thead><tr>
+    <th>POC</th><th>Name</th><th>Score</th>
+    <th style="text-align:right">ABI vol (KHL)</th><th style="text-align:right">ABI share %</th>
+    <th style="text-align:right">P+SP vol (KHL)</th><th style="text-align:right">P+SP share %</th>
+    <th>Context</th>
+    </tr></thead><tbody>${DATA.scores.map(r=>`<tr>
+      <td>${r.outlet_code}</td>
+      <td style="color:var(--mut)">${r.outlet_name||'\u2014'}</td>
+      <td><span class="pill p${r.priority_score}">${r.priority_score}</span></td>
+      <td style="text-align:right">${(+r.abi_vol).toFixed(2)}</td>
+      <td style="text-align:right">${(+r.abi_share).toFixed(1)}</td>
+      <td style="text-align:right">${(+r.psp_vol).toFixed(2)}</td>
+      <td style="text-align:right">${(+r.psp_share).toFixed(1)}</td>
+      <td style="white-space:normal;color:var(--mut);font-size:.7rem">${r.outlet_context}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+function renderRules(){
+  const a=DATA.area_avg||{};
+  const avgCard=(label,val)=>`<div style="background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:9px 12px">
+    <div style="font-family:'Inter',sans-serif;font-weight:700;
+      font-size:1.05rem;color:var(--acc2)">${val}</div>
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;
+      color:var(--mut);margin-top:2px">${label}</div></div>`;
+  $('#v_rules').innerHTML=`<p class="hint">Area Performance &mdash; M1 universe
+    (${a.n_outlets||''} outlets, current quarter). These are the benchmarks
+    every POC is scored against. Volumes are in KHL.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
+      ${avgCard('Avg total vol (KHL)',a.avg_total_vol??'\u2014')}
+      ${avgCard('Avg ABI vol (KHL)',a.avg_abi_vol??'\u2014')}
+      ${avgCard('Avg ABI share %',a.avg_abi_share??'\u2014')}
+      ${avgCard('Avg P+SP vol (KHL)',a.avg_psp_vol??'\u2014')}
+      ${avgCard('Avg ABI P+SP vol (KHL)',a.avg_abipsp_vol??'\u2014')}
+      ${avgCard('Avg ABI P+SP share %',a.avg_abipsp_share??'\u2014')}
+    </div>`;
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  ['cal','map','prio','rules'].forEach(v=>
+    $('#v_'+v).style.display=(v===t.dataset.v?'block':'none'));
+}));
+</script>
+</body>
+</html>

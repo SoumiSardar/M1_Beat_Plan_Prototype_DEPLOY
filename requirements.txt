@@ -1,0 +1,7 @@
+flask==3.0.3
+pandas==2.2.2
+openpyxl==3.1.5
+scikit-learn==1.5.1
+folium==0.17.0
+ortools==9.10.4067
+gunicorn==22.0.0
